@@ -3,10 +3,14 @@ import Cell from './Cell';
 import calculateWinner from '../../utils/calculateWinner';
 import { useSearchParams, useNavigate } from "react-router-dom";
 import Modal from '../UI/Modal';
+import LanguageSwitcher from '../UI/LanguageSwitcher';
+import ThemeSwitcher from '../UI/ThemeSwitcher';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 export default function Board() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const urlDifficulty = searchParams.get("difficulty") || "easy";
   const [board, setBoard] = useState(Array(9).fill(null));
   const [isPlayerTurn, setIsPlayerTurn] = useState(true);
@@ -106,9 +110,9 @@ export default function Board() {
   };
 
   const getResultMessage = () => {
-    if (winner === 'X') return '🎉 مبروك! أنت فزت';
-    if (winner === 'O') return '💻 الروبوت فاز! حاول مرة ثانية';
-    if (winner === 'draw') return '⚖️ تعادل!';
+    if (winner === 'X') return t('congratulations');
+    if (winner === 'O') return t('botWon');
+    if (winner === 'draw') return t('draw');
     return '';
   };
 
@@ -120,47 +124,90 @@ export default function Board() {
   };
 
   return (
-    <div className="flex flex-col items-center mt-8 px-2 w-full min-h-screen bg-gradient-to-br from-blue-100 to-indigo-200">
-      <h1 className="text-3xl md:text-4xl font-bold mb-4 text-gray-800 drop-shadow">لعبة XO ضد الروبوت 🤖</h1>
+    <div 
+      className="flex flex-col items-center mt-8 px-2 w-full min-h-screen"
+      style={{
+        background: 'linear-gradient(135deg, var(--bg-theme) 0%, var(--bg1-theme) 100%)'
+      }}
+    >
+      {/* Language and Theme Switchers */}
+      <div className="absolute top-4 right-4 flex gap-2">
+        <LanguageSwitcher />
+        <ThemeSwitcher />
+      </div>
+
+      <h1 
+        className="text-3xl md:text-4xl font-bold mb-4 drop-shadow"
+        style={{ color: 'var(--text-theme)' }}
+      >
+        {t('gameTitle')}
+      </h1>
       
-      <div className="grid grid-cols-3 gap-2 md:gap-4 bg-white rounded-2xl shadow-lg p-4 md:p-6 w-full max-w-xs md:max-w-md aspect-square">
+      <div 
+        className="grid grid-cols-3 gap-2 md:gap-4 rounded-2xl shadow-lg p-4 md:p-6 w-full max-w-xs md:max-w-md aspect-square"
+        style={{
+          backgroundColor: 'var(--bg1-theme)',
+          border: `2px solid var(--line-theme)`
+        }}
+      >
         {board.map((cell, idx) => (
           <Cell key={idx} value={cell} onClick={() => handleCellClick(idx)} />
         ))}
       </div>
       
       {!showResults && (
-        <p className="mt-6 text-xl md:text-2xl font-semibold text-gray-700 min-h-[2.5rem]">
-          {!winner && (isPlayerTurn ? '🧍 دورك الآن (X)' : '🤖 الروبوت يلعب...')}
+        <p 
+          className="mt-6 text-xl md:text-2xl font-semibold min-h-[2.5rem]"
+          style={{ color: 'var(--text1-theme)' }}
+        >
+          {!winner && (isPlayerTurn ? t('yourTurn') : t('botPlaying'))}
         </p>
       )}
 
       <Modal isOpen={showResults} onClose={() => setShowResults(false)}>
         <div className="text-center">
-          <h2 className={`text-2xl font-bold mb-6 ${getResultColor()}`}>
+          <h2 
+            className={`text-2xl font-bold mb-6 ${getResultColor()}`}
+            style={{ color: 'var(--text-theme)' }}
+          >
             {getResultMessage()}
           </h2>
           
           <div className="flex flex-col gap-3">
             <button
               onClick={() => navigate("/game-history")}
-              className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition transform hover:scale-105"
+              className="w-full px-4 py-3 rounded-lg font-semibold transition transform hover:scale-105"
+              style={{
+                backgroundColor: 'var(--line1-theme)',
+                color: 'var(--bg-theme)',
+                border: `1px solid var(--line-theme)`
+              }}
             >
-              📋 عرض القائمة
+              📋 {t('showList')}
             </button>
             
             <button
               onClick={() => navigate("/")}
-              className="w-full px-4 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold transition transform hover:scale-105"
+              className="w-full px-4 py-3 rounded-lg font-semibold transition transform hover:scale-105"
+              style={{
+                backgroundColor: 'var(--line-theme)',
+                color: 'var(--bg-theme)',
+                border: `1px solid var(--line1-theme)`
+              }}
             >
-              🏠 العودة للقائمة
+              🏠 {t('returnToMenu')}
             </button>
             
             <button
               onClick={resetGame}
-              className="w-full px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition transform hover:scale-105"
+              className="w-full px-4 py-3 rounded-lg font-semibold transition transform hover:scale-105"
+              style={{
+                backgroundColor: 'var(--line1-theme)',
+                color: 'var(--bg-theme)',
+                border: `1px solid var(--line-theme)`
+              }}
             >
-              🔁 لعب مرة أخرى
+              🔁 {t('playAgainModal')}
             </button>
           </div>
         </div>
