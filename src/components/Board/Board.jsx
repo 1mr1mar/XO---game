@@ -1,15 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import Cell from './Cell';
 import calculateWinner from '../../utils/calculateWinner';
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import Modal from '../UI/Modal';
 
 export default function Board() {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const urlDifficulty = searchParams.get("difficulty") || "easy";
   const [board, setBoard] = useState(Array(9).fill(null));
   const [isPlayerTurn, setIsPlayerTurn] = useState(true);
   const [winner, setWinner] = useState(null);
   const [difficulty, setDifficulty] = useState(urlDifficulty);
+  const [showResults, setShowResults] = useState(false);
+
+  // Sound effects
+  const playSound = (soundName) => {
+    const audio = new Audio(`/sounds/${soundName}.mp3`);
+    audio.play().catch(e => console.log('Audio play failed:', e));
+  };
 
   function getBotMove(board, difficulty) {
     const emptyIndices = board
@@ -47,6 +56,7 @@ export default function Board() {
 
   const handleCellClick = (index) => {
     if (!isPlayerTurn || board[index] !== null || winner) return;
+    playSound('click');
     const newBoard = [...board];
     newBoard[index] = 'X';
     setBoard(newBoard);
@@ -70,7 +80,18 @@ export default function Board() {
 
   useEffect(() => {
     const result = calculateWinner(board);
-    if (result) setWinner(result);
+    if (result) {
+      setWinner(result);
+      setShowResults(true);
+      // Play appropriate sound
+      if (result === 'X') {
+        playSound('win');
+      } else if (result === 'O') {
+        playSound('lose');
+      } else if (result === 'draw') {
+        playSound('draw');
+      }
+    }
   }, [board]);
 
   useEffect(() => {
@@ -81,6 +102,21 @@ export default function Board() {
     setBoard(Array(9).fill(null));
     setIsPlayerTurn(true);
     setWinner(null);
+    setShowResults(false);
+  };
+
+  const getResultMessage = () => {
+    if (winner === 'X') return '🎉 مبروك! أنت فزت';
+    if (winner === 'O') return '💻 الروبوت فاز! حاول مرة ثانية';
+    if (winner === 'draw') return '⚖️ تعادل!';
+    return '';
+  };
+
+  const getResultColor = () => {
+    if (winner === 'X') return 'text-green-600';
+    if (winner === 'O') return 'text-red-600';
+    if (winner === 'draw') return 'text-yellow-600';
+    return 'text-gray-600';
   };
 
   return (
@@ -92,20 +128,43 @@ export default function Board() {
           <Cell key={idx} value={cell} onClick={() => handleCellClick(idx)} />
         ))}
       </div>
-      <p className="mt-6 text-xl md:text-2xl font-semibold text-gray-700 min-h-[2.5rem]">
-        {winner === 'X' && '🎉 مبروك! أنت فزت'}
-        {winner === 'O' && '💻 الروبوت فاز! حاول مرة ثانية'}
-        {winner === 'draw' && '⚖️ تعادل!'}
-        {!winner && (isPlayerTurn ? '🧍 دورك الآن (X)' : '🤖 الروبوت يلعب...')}
-      </p>
-      {winner && (
-        <button
-          onClick={resetGame}
-          className="mt-4 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow text-lg font-semibold transition transform hover:scale-105"
-        >
-          🔁 إعادة اللعب
-        </button>
+      
+      {!showResults && (
+        <p className="mt-6 text-xl md:text-2xl font-semibold text-gray-700 min-h-[2.5rem]">
+          {!winner && (isPlayerTurn ? '🧍 دورك الآن (X)' : '🤖 الروبوت يلعب...')}
+        </p>
       )}
+
+      <Modal isOpen={showResults} onClose={() => setShowResults(false)}>
+        <div className="text-center">
+          <h2 className={`text-2xl font-bold mb-6 ${getResultColor()}`}>
+            {getResultMessage()}
+          </h2>
+          
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={() => navigate("/game-history")}
+              className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition transform hover:scale-105"
+            >
+              📋 عرض القائمة
+            </button>
+            
+            <button
+              onClick={() => navigate("/")}
+              className="w-full px-4 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold transition transform hover:scale-105"
+            >
+              🏠 العودة للقائمة
+            </button>
+            
+            <button
+              onClick={resetGame}
+              className="w-full px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition transform hover:scale-105"
+            >
+              🔁 لعب مرة أخرى
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
