@@ -3,8 +3,6 @@ import Cell from './Cell';
 import calculateWinner from '../../utils/calculateWinner';
 import { useSearchParams, useNavigate } from "react-router-dom";
 import Modal from '../UI/Modal';
-import LanguageSwitcher from '../UI/LanguageSwitcher';
-import ThemeSwitcher from '../UI/ThemeSwitcher';
 import { useLanguage } from '../../contexts/LanguageContext';
 
 export default function Board() {
@@ -124,18 +122,7 @@ export default function Board() {
   };
 
   return (
-    <div 
-      className="flex flex-col items-center mt-8 px-2 w-full min-h-screen"
-      style={{
-        background: 'linear-gradient(135deg, var(--bg-theme) 0%, var(--bg1-theme) 100%)'
-      }}
-    >
-      {/* Language and Theme Switchers */}
-      <div className="absolute top-4 right-4 flex gap-2">
-        <LanguageSwitcher />
-        <ThemeSwitcher />
-      </div>
-
+    <div className="flex flex-col items-center px-2 py-8">
       <h1 
         className="text-3xl md:text-4xl font-bold mb-4 drop-shadow"
         style={{ color: 'var(--text-theme)' }}

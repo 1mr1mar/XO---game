@@ -1,8 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import Modal from "../components/UI/Modal";
-import LanguageSwitcher from "../components/UI/LanguageSwitcher";
-import ThemeSwitcher from "../components/UI/ThemeSwitcher";
 import { useLanguage } from "../contexts/LanguageContext";
 
 export default function GameModeSelectionPage() {
@@ -22,18 +20,7 @@ export default function GameModeSelectionPage() {
   };
 
   return (
-    <div 
-      className="min-h-screen flex flex-col items-center justify-center gap-8 px-4"
-      style={{
-        background: 'linear-gradient(135deg, var(--bg-theme) 0%, var(--bg1-theme) 100%)'
-      }}
-    >
-      {/* Language and Theme Switchers */}
-      <div className="absolute top-4 right-4 flex gap-2">
-        <LanguageSwitcher />
-        <ThemeSwitcher />
-      </div>
-
+    <div className="flex flex-col items-center justify-center gap-8 px-4 py-16">
       <h1 
         className="text-4xl font-bold drop-shadow"
         style={{ color: 'var(--text-theme)' }}
