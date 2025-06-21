@@ -1,110 +1,40 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Cell from './Cell';
-import calculateWinner from '../../utils/calculateWinner';
 import { useSearchParams, useNavigate } from "react-router-dom";
 import Modal from '../UI/Modal';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useGame } from '../../contexts/GameContext';
 
 export default function Board() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const {
+    board,
+    isPlayerTurn,
+    winner,
+    difficulty,
+    botThinking,
+    makeMove,
+    resetGame,
+    setDifficulty,
+    playSound,
+    isGameActive,
+    currentPlayer
+  } = useGame();
+
   const urlDifficulty = searchParams.get("difficulty") || "easy";
-  const [board, setBoard] = useState(Array(9).fill(null));
-  const [isPlayerTurn, setIsPlayerTurn] = useState(true);
-  const [winner, setWinner] = useState(null);
-  const [difficulty, setDifficulty] = useState(urlDifficulty);
-  const [showResults, setShowResults] = useState(false);
 
-  // Sound effects
-  const playSound = (soundName) => {
-    const audio = new Audio(`/sounds/${soundName}.mp3`);
-    audio.play().catch(e => console.log('Audio play failed:', e));
-  };
-
-  function getBotMove(board, difficulty) {
-    const emptyIndices = board
-      .map((cell, idx) => (cell === null ? idx : null))
-      .filter((val) => val !== null);
-    if (emptyIndices.length === 0) return null;
-    if (difficulty === 'easy') {
-      return emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
-    }
-    if (difficulty === 'medium') {
-      // 50% chance to play optimally, 50% random
-      if (Math.random() < 0.5) {
-        // Optimal move (like hard)
-        for (let idx of emptyIndices) {
-          const testBoard = [...board];
-          testBoard[idx] = 'O';
-          if (calculateWinner(testBoard) === 'O') return idx;
-          testBoard[idx] = 'X';
-          if (calculateWinner(testBoard) === 'X') return idx;
-        }
-      }
-      // Otherwise random
-      return emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
-    }
-    // Hard: always play optimally
-    for (let idx of emptyIndices) {
-      const testBoard = [...board];
-      testBoard[idx] = 'O';
-      if (calculateWinner(testBoard) === 'O') return idx;
-      testBoard[idx] = 'X';
-      if (calculateWinner(testBoard) === 'X') return idx;
-    }
-    return emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
-  }
+  // Set difficulty from URL on component mount
+  React.useEffect(() => {
+    setDifficulty(urlDifficulty);
+  }, [urlDifficulty, setDifficulty]);
 
   const handleCellClick = (index) => {
-    if (!isPlayerTurn || board[index] !== null || winner) return;
+    if (!isPlayerTurn || board[index] !== null || winner || botThinking) return;
+    
     playSound('click');
-    const newBoard = [...board];
-    newBoard[index] = 'X';
-    setBoard(newBoard);
-    setIsPlayerTurn(false);
-  };
-
-  useEffect(() => {
-    if (!isPlayerTurn && !winner) {
-      const timer = setTimeout(() => {
-        const robotMove = getBotMove(board, difficulty);
-        if (robotMove !== null) {
-          const newBoard = [...board];
-          newBoard[robotMove] = 'O';
-          setBoard(newBoard);
-          setIsPlayerTurn(true);
-        }
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [isPlayerTurn, board, winner, difficulty]);
-
-  useEffect(() => {
-    const result = calculateWinner(board);
-    if (result) {
-      setWinner(result);
-      setShowResults(true);
-      // Play appropriate sound
-      if (result === 'X') {
-        playSound('win');
-      } else if (result === 'O') {
-        playSound('lose');
-      } else if (result === 'draw') {
-        playSound('draw');
-      }
-    }
-  }, [board]);
-
-  useEffect(() => {
-    setDifficulty(urlDifficulty);
-  }, [urlDifficulty]);
-
-  const resetGame = () => {
-    setBoard(Array(9).fill(null));
-    setIsPlayerTurn(true);
-    setWinner(null);
-    setShowResults(false);
+    makeMove(index, 'X');
   };
 
   const getResultMessage = () => {
@@ -142,16 +72,17 @@ export default function Board() {
         ))}
       </div>
       
-      {!showResults && (
+      {!winner && (
         <p 
           className="mt-6 text-xl md:text-2xl font-semibold min-h-[2.5rem]"
           style={{ color: 'var(--text1-theme)' }}
         >
-          {!winner && (isPlayerTurn ? t('yourTurn') : t('botPlaying'))}
+          {isGameActive && (isPlayerTurn ? t('yourTurn') : t('botPlaying'))}
+          {botThinking && <span className="animate-pulse">...</span>}
         </p>
       )}
 
-      <Modal isOpen={showResults} onClose={() => setShowResults(false)}>
+      <Modal isOpen={!!winner} onClose={() => {}}>
         <div className="text-center">
           <h2 
             className={`text-2xl font-bold mb-6 ${getResultColor()}`}

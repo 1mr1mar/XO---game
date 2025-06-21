@@ -61,6 +61,10 @@ export const ThemeProvider = ({ children }) => {
       "--line-theme": theme.lines,
       "--text-theme": theme.text,
       "--text1-theme": theme.text1,
+      "--text2-theme": theme.text1 + "80", // Add transparency for secondary text
+      "--accent-green": "#10B981",
+      "--accent-red": "#EF4444",
+      "--accent-yellow": "#F59E0B",
     };
 
     Object.entries(cssVariables).forEach(([key, value]) => {
@@ -74,8 +78,21 @@ export const ThemeProvider = ({ children }) => {
     }
   };
 
+  const toggleTheme = () => {
+    const themeNames = Object.keys(themes);
+    const currentIndex = themeNames.indexOf(currentTheme);
+    const nextIndex = (currentIndex + 1) % themeNames.length;
+    setCurrentTheme(themeNames[nextIndex]);
+  };
+
   return (
-    <ThemeContext.Provider value={{ currentTheme, changeTheme, themes }}>
+    <ThemeContext.Provider value={{ 
+      currentTheme, 
+      changeTheme, 
+      themes,
+      theme: currentTheme, // Alias for compatibility
+      toggleTheme
+    }}>
       {children}
     </ThemeContext.Provider>
   );
